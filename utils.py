@@ -91,7 +91,7 @@ def compute_gain(sound, fs, min_db=-80.0, mode='A_weighting'):
     stride = n_fft // 2
 
     gain = []
-    for i in xrange(0, len(sound) - n_fft + 1, stride):
+    for i in range(0, len(sound) - n_fft + 1, stride):
         if mode == 'RMSE':
             g = np.mean(sound[i: i + n_fft] ** 2)
         elif mode == 'A_weighting':

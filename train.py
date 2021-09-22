@@ -117,7 +117,7 @@ class Trainer:
         
         acc = F.accuracy(output, targets1)
         
-        return float(loss.data), float(acc.data)
+        return loss, acc
     
     def train(self, epoch):
         self.optimizer.lr = self.lr_schedule(epoch)
@@ -127,20 +127,17 @@ class Trainer:
         for i, batch in enumerate(self.train_iter):
 
             x_array, t_array = chainer.dataset.concat_examples(batch)
-
+            
+            x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]))
+            t = chainer.Variable(cuda.to_gpu(t_array))
+            
             #################################################################
             # Adding the ssmix function
-            splitted = self.split_labeled_batch(x_array, t_array)
+            splitted = self.split_labeled_batch(x, t)
             x_left, t_left, x_right, t_right = splitted
             
             if x_left is None:  # Odd length batch
                 continue
-
-            x_left = chainer.Variable(cuda.to_gpu(x_left[:, None, None, :]))
-            t_left = chainer.Variable(cuda.to_gpu(t_left))
-
-            x_right = chainer.Variable(cuda.to_gpu(x_right[:, None, None, :]))
-            t_right = chainer.Variable(cuda.to_gpu(t_right))
 
             mix_input1, ratio_left = self.augment(x_left, x_right, t_left, t_right)
             mix_input2, ratio_right = self.augment(x_right, x_left, t_right, t_left)
@@ -156,11 +153,11 @@ class Trainer:
             loss3, acc3 = self.get_loss(mix_input1, t_left, t_right, ratio_left)
             loss4, acc4 = self.get_loss(mix_input2, t_right, t_left, ratio_right)
             
-            acc_list = []
+            loss_list.extend([loss1, loss2, loss3, loss4])
+            acc_list.extend[[acc1, acc2, acc3, acc4]]
             
-            acc_list.append(F.accuracy(y_left, F.argmax(t, axis=1)))
-            acc = (F.accuracy(y_left, t_left) + F.accuracy(y_right, t_right) + \
-                F.accuracy(y_left_mix, t_left) + F.accuracy(y_right_mix, t_right)) / 4
+            loss = F.mean(loss_list))
+            acc_list = F.mean(acc_list)
 
             loss.backward()
             self.optimizer.update()
@@ -231,9 +228,8 @@ class Trainer:
             # Skip any odd numbered batch
             return None, None, None, None, None
 
-        half_size = len(inputs) // 2
-        inputs_left, inputs_right = chainer.datasets.split_dataset(inputs, half_size)
-        labels_left, labels_right = chainer.datasets.split_dataset(labels, half_size)
+        inputs_left, inputs_right = F.split_axis(inputs, axis=0, indices_or_sections=2, force_tuple=True)
+        labels_left, labels_right = F.split_axis(labels, axis=0, indices_or_sections=2, force_tuple=True)
 
         return inputs_left, labels_left, inputs_right, labels_right
 
@@ -258,8 +254,8 @@ class Trainer:
         ratio = cuda.to_gpu(np.ones((batch_size,)))
 
         for i in range(batch_size):
-            saliency1_eg = saliency1[i, :]
-            saliency2_eg = saliency2[i, :]
+            saliency1_eg = saliency1[i]
+            saliency2_eg = saliency2[i]
 
             saliency1_pool = (
                 F.avg_pool1d(saliency1_eg, mix_size, stride=1).squeeze(0).squeeze(0)
@@ -272,8 +268,8 @@ class Trainer:
             input1_idx = F.argmin(saliency1_pool)
             input2_idx = F.argmax(saliency2_pool)
 
-            inputs_aug[i, input1_idx:input1_idx + mix_size] = inputs2[
-                i, input2_idx:input2_idx + mix_size
+            inputs_aug[i, :, :, input1_idx:input1_idx + mix_size] = inputs2[
+                i, :, :, input2_idx:input2_idx + mix_size
             ]
             
             ratio[i] = 1 - (mix_size / self.opt.inputLength)

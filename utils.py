@@ -119,21 +119,21 @@ def mix(sound1, sound2, r, fs):
     return sound
 
 
-def get_saliency(args, input, target):
+def get_saliency(args, inputs, target):
     batch_size = target.shape[0]
     model = cuda.to_gpu(args.model)
-    
-    output = model(input)
-    
+
+    output = model(inputs)
+
     args.optimizer.zero_grad()
     loss = F.mean(args.criterion(output, cuda.to_gpu(target)))
     loss.backward()
+
+    unary = F.absolute(inputs.grad) # (64, 1, 1, ?)
     
-    unary = F.sqrt(
-        F.mean(input.grad ** 2, 2)
-    )
+    unary = unary / F.max(unary.reshape(batch_size, -1), axis=1)
     # unary = unary / unary.reshape(batch_size, -1).max()
-    return unary, target  
+    return unary, target 
 
 
 def kl_divergence(y, t):

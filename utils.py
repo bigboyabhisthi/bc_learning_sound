@@ -124,7 +124,9 @@ def get_saliency(args, input, target):
     model = cuda.to_gpu(args.model)
     
     output = model(input)
-    loss = args.criterion(output, cuda.to_gpu(target))
+    
+    args.optimizer.zero_grad()
+    loss = F.mean(args.criterion(output, cuda.to_gpu(target)))
     loss.backward()
     
     unary = F.sqrt(

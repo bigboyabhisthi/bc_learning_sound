@@ -1,7 +1,8 @@
 import numpy as np
 import random
+import copy
 import chainer.functions as F
-
+from chainer import cuda
 
 # Default data augmentation
 def padding(pad):
@@ -116,6 +117,21 @@ def mix(sound1, sound2, r, fs):
     sound = ((sound1 * t + sound2 * (1 - t)) / np.sqrt(t ** 2 + (1 - t) ** 2))
 
     return sound
+
+
+def get_saliency(args, input, target):
+    batch_size = target.shape[0]
+    model = cuda.to_gpu(args.model)
+    
+    output = model(input)
+    loss = args.criterion(output, cuda.to_gpu(target))
+    loss.backward()
+    
+    unary = F.sqrt(
+        F.mean(input.grad ** 2, 2)
+    )
+    # unary = unary / unary.reshape(batch_size, -1).max()
+    return unary, target  
 
 
 def kl_divergence(y, t):

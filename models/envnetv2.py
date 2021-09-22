@@ -26,7 +26,7 @@ class EnvNetv2(chainer.Chain):
             conv10=ConvBNReLU(256, 256, (1, 2)),
             fc11=L.Linear(256 * 10 * 8, 4096),
             fc12=L.Linear(4096, 4096),
-            fc13=L.Linear(4096, n_classes)
+            fc13=L.Linear(4096, n_classes),
         )
         self.train = True
 

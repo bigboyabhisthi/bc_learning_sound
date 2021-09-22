@@ -23,16 +23,18 @@ class SoundDataset(chainer.dataset.DatasetMixin):
             if self.opt.strongAugment:
                 funcs += [U.random_scale(1.25)]
 
-            funcs += [U.padding(self.opt.inputLength // 2),
-                      U.random_crop(self.opt.inputLength),
-                      U.normalize(32768.0),
-                      ]
+            funcs += [
+                U.padding(self.opt.inputLength // 2),
+                U.random_crop(self.opt.inputLength),
+                U.normalize(32768.0),
+            ]
 
         else:
-            funcs = [U.padding(self.opt.inputLength // 2),
-                     U.normalize(32768.0),
-                     U.multi_crop(self.opt.inputLength, self.opt.nCrops),
-                     ]
+            funcs = [
+                U.padding(self.opt.inputLength // 2),
+                U.normalize(32768.0),
+                U.multi_crop(self.opt.inputLength, self.opt.nCrops),
+            ]
 
         return funcs
 
@@ -79,8 +81,8 @@ def setup(opt, split):
     val_sounds = []
     val_labels = []
     for i in range(1, opt.nFolds + 1):
-        sounds = dataset['fold{}'.format(i)].item()['sounds']
-        labels = dataset['fold{}'.format(i)].item()['labels']
+        sounds = dataset["fold{}".format(i)].item()["sounds"]
+        labels = dataset["fold{}".format(i)].item()["labels"]
         if i == split:
             val_sounds.extend(sounds)
             val_labels.extend(labels)
@@ -91,7 +93,11 @@ def setup(opt, split):
     # Iterator setup
     train_data = SoundDataset(train_sounds, train_labels, opt, train=True)
     val_data = SoundDataset(val_sounds, val_labels, opt, train=False)
-    train_iter = chainer.iterators.MultiprocessIterator(train_data, opt.batchSize, repeat=False)
-    val_iter = chainer.iterators.SerialIterator(val_data, opt.batchSize // opt.nCrops, repeat=False, shuffle=False)
+    train_iter = chainer.iterators.MultiprocessIterator(
+        train_data, opt.batchSize, repeat=False
+    )
+    val_iter = chainer.iterators.SerialIterator(
+        val_data, opt.batchSize // opt.nCrops, repeat=False, shuffle=False
+    )
 
     return train_iter, val_iter

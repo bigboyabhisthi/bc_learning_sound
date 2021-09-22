@@ -21,7 +21,7 @@ def main():
     opt = opts.parse()
     chainer.cuda.get_device_from_id(opt.gpu).use()
     for split in opt.splits:
-        print('+-- Split {} --+'.format(split))
+        print("+-- Split {} --+".format(split))
         train(opt, split)
 
 
@@ -47,15 +47,16 @@ def train(opt, split):
 
     if opt.testOnly:
         chainer.serializers.load_npz(
-            os.path.join(opt.save, 'model_split{}.npz'.format(split)), trainer.model)
+            os.path.join(opt.save, "model_split{}.npz".format(split)), trainer.model
+        )
         val_top1 = trainer.val()
-        print('| Val: top1 {:.2f}'.format(val_top1))
+        print("| Val: top1 {:.2f}".format(val_top1))
         return
 
     for epoch in range(start_epoch + 1, opt.nEpochs + 1):
         train_loss, train_top1 = trainer.train(epoch)
         val_top1 = trainer.val()
-        sys.stderr.write('\r\033[K')
+        sys.stderr.write("\r\033[K")
         sys.stdout.write(
             '| Epoch: {}/{} | Train: LR {}  Loss {:.3f}  top1 {:.2f} | Val: top1 {:.2f}\n'.format(
                 epoch, opt.nEpochs, trainer.optimizer.lr, train_loss, train_top1, val_top1))
@@ -66,10 +67,11 @@ def train(opt, split):
               json.dump({'epoch':epoch},fp)
         sys.stdout.flush()
 
-    if opt.save != 'None':
+    if opt.save != "None":
         chainer.serializers.save_npz(
-            os.path.join(opt.save, 'model_split{}.npz'.format(split)), model)
+            os.path.join(opt.save, "model_split{}.npz".format(split)), model
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

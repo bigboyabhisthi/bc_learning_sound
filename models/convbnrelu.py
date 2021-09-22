@@ -4,12 +4,27 @@ import chainer.links as L
 
 
 class ConvBNReLU(chainer.Chain):
-    def __init__(self, in_channels, out_channels, ksize, stride=1, pad=0,
-                 initialW=chainer.initializers.HeNormal(), nobias=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        ksize,
+        stride=1,
+        pad=0,
+        initialW=chainer.initializers.HeNormal(),
+        nobias=True,
+    ):
         super(ConvBNReLU, self).__init__(
-            conv=L.Convolution2D(in_channels, out_channels, ksize, stride, pad,
-                                 initialW=initialW, nobias=nobias),
-            bn=L.BatchNormalization(out_channels)
+            conv=L.Convolution2D(
+                in_channels,
+                out_channels,
+                ksize,
+                stride,
+                pad,
+                initialW=initialW,
+                nobias=nobias,
+            ),
+            bn=L.BatchNormalization(out_channels),
         )
 
     def __call__(self, x, train):

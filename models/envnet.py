@@ -20,7 +20,7 @@ class EnvNet(chainer.Chain):
             conv4=ConvBNReLU(50, 50, (1, 5)),
             fc5=L.Linear(50 * 11 * 14, 4096),
             fc6=L.Linear(4096, 4096),
-            fc7=L.Linear(4096, n_classes)
+            fc7=L.Linear(4096, n_classes),
         )
         self.train = True
 

@@ -13,6 +13,7 @@ def parse():
     parser.add_argument('--save', default='None', help='Directory to save the results')
     parser.add_argument('--testOnly', action='store_true')
     parser.add_argument('--gpu', type=int, default=0)
+    parser.add_argument('--ss_winsize', type=int, default=10)
 
     # Learning settings (default settings are defined below)
     parser.add_argument('--BC', action='store_true', help='BC learning')

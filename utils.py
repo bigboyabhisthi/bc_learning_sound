@@ -3,6 +3,7 @@ import random
 import copy
 import chainer.functions as F
 from chainer import cuda
+import sys
 
 # Default data augmentation
 def padding(pad):
@@ -91,7 +92,7 @@ def compute_gain(sound, fs, min_db=-80.0, mode='A_weighting'):
     stride = n_fft // 2
 
     gain = []
-    for i in xrange(0, len(sound) - n_fft + 1, stride):
+    for i in range(0, len(sound) - n_fft + 1, stride):
         if mode == 'RMSE':
             g = np.mean(sound[i: i + n_fft] ** 2)
         elif mode == 'A_weighting':
@@ -119,21 +120,27 @@ def mix(sound1, sound2, r, fs):
     return sound
 
 
-def get_saliency(args, input, target):
+def get_saliency(args, inputs, target):
     batch_size = target.shape[0]
-    model = cuda.to_gpu(args.model)
-    
-    output = model(input)
-    
-    args.optimizer.zero_grad()
-    loss = F.mean(args.criterion(output, cuda.to_gpu(target)))
+    model = args.get('model')
+  
+    model.cleargrads()
+    output = model(inputs)
+
+    criterion = args.get('criterion')
+    loss = F.mean(criterion(output,target))
     loss.backward()
-    
-    unary = F.sqrt(
-        F.mean(input.grad ** 2, 2)
-    )
+
+    # try:
+    #   unary = F.absolute(inputs.grad) # (64, 1, 1, ?)
+    # except:
+    #   print(inputs.grad)
+    #   #sys.exit()
+
+    unary = F.absolute(inputs.grad) # (64, 1, 1, ?)
+    unary = unary / F.max(unary.reshape(batch_size, -1), axis=0).reshape(1,1,1,-1)
     # unary = unary / unary.reshape(batch_size, -1).max()
-    return unary, target  
+    return unary 
 
 
 def kl_divergence(y, t):

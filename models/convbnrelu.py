@@ -14,6 +14,7 @@ class ConvBNReLU(chainer.Chain):
 
     def __call__(self, x, train):
         h = self.conv(x)
-        h = self.bn(h, test=not train)
+        with chainer.using_config('test',not train):
+          h = self.bn(h)
 
         return F.relu(h)

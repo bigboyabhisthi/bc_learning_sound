@@ -8,7 +8,7 @@
 import chainer
 import chainer.functions as F
 import chainer.links as L
-from convbnrelu import ConvBNReLU
+from .convbnrelu import ConvBNReLU
 
 
 class EnvNet(chainer.Chain):

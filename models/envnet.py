@@ -35,7 +35,7 @@ class EnvNet(chainer.Chain):
         h = self.conv4(h, self.train)
         h = F.max_pooling_2d(h, (1, 3))
 
-        with chainer.use_config("train", self.train):
+        with chainer.using_config("train", self.train):
             h = F.dropout(F.relu(self.fc5(h)))
             h = F.dropout(F.relu(self.fc6(h)))
 

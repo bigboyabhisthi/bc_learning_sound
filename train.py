@@ -41,13 +41,23 @@ class Trainer:
             train_acc += float(acc.data) * len(t.data)
 
             elapsed_time = time.time() - self.start_time
-            progress = (self.n_batches * (epoch - 1) + i + 1) * 1.0 / (self.n_batches * self.opt.nEpochs)
+            progress = (
+                (self.n_batches * (epoch - 1) + i + 1)
+                * 1.0
+                / (self.n_batches * self.opt.nEpochs)
+            )
             eta = elapsed_time / progress - elapsed_time
 
-            line = '* Epoch: {}/{} ({}/{}) | Train: LR {} | Time: {} (ETA: {})'.format(
-                epoch, self.opt.nEpochs, i + 1, self.n_batches,
-                self.optimizer.lr, utils.to_hms(elapsed_time), utils.to_hms(eta))
-            sys.stderr.write('\r\033[K' + line)
+            line = "* Epoch: {}/{} ({}/{}) | Train: LR {} | Time: {} (ETA: {})".format(
+                epoch,
+                self.opt.nEpochs,
+                i + 1,
+                self.n_batches,
+                self.optimizer.lr,
+                utils.to_hms(elapsed_time),
+                utils.to_hms(eta),
+            )
+            sys.stderr.write("\r\033[K" + line)
             sys.stderr.flush()
 
         self.train_iter.reset()
@@ -62,11 +72,15 @@ class Trainer:
         for batch in self.val_iter:
             x_array, t_array = chainer.dataset.concat_examples(batch)
             if self.opt.nCrops > 1:
-                x_array = x_array.reshape((x_array.shape[0] * self.opt.nCrops, x_array.shape[2]))
+                x_array = x_array.reshape(
+                    (x_array.shape[0] * self.opt.nCrops, x_array.shape[2])
+                )
             x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]), volatile=True)
             t = chainer.Variable(cuda.to_gpu(t_array), volatile=True)
             y = F.softmax(self.model(x))
-            y = F.reshape(y, (y.shape[0] // self.opt.nCrops, self.opt.nCrops, y.shape[1]))
+            y = F.reshape(
+                y, (y.shape[0] // self.opt.nCrops, self.opt.nCrops, y.shape[1])
+            )
             y = F.mean(y, axis=1)
             acc = F.accuracy(y, t)
             val_acc += float(acc.data) * len(t.data)

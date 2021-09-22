@@ -75,8 +75,9 @@ class Trainer:
                 x_array = x_array.reshape(
                     (x_array.shape[0] * self.opt.nCrops, x_array.shape[2])
                 )
-            x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]), volatile=True)
-            t = chainer.Variable(cuda.to_gpu(t_array), volatile=True)
+            with chainer.use_config("volatile", True):
+                x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]))
+                t = chainer.Variable(cuda.to_gpu(t_array))
             y = F.softmax(self.model(x))
             y = F.reshape(
                 y, (y.shape[0] // self.opt.nCrops, self.opt.nCrops, y.shape[1])

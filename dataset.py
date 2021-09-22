@@ -81,8 +81,8 @@ def setup(opt, split):
     val_sounds = []
     val_labels = []
     for i in range(1, opt.nFolds + 1):
-        sounds = dataset["fold{}".format(i)].item()["sounds"]
-        labels = dataset["fold{}".format(i)].item()["labels"]
+        sounds = dataset[f"fold{i}"].item()["sounds"]
+        labels = dataset[f"fold{i}"].item()["labels"]
         if i == split:
             val_sounds.extend(sounds)
             val_labels.extend(labels)

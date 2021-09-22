@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "saliency_sound_mix"
+version = "0.1.0"
+description = "Code for saliency sound mix"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+chainer = "^7.8.0"
+wavio = "^0.0.4"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -71,7 +71,7 @@ class SoundDataset(chainer.dataset.DatasetMixin):
 
 
 def setup(opt, split):
-    dataset = np.load(os.path.join(opt.data, opt.dataset, 'wav{}.npz'.format(opt.fs // 1000)))
+    dataset = np.load(os.path.join(opt.data, opt.dataset, 'wav{}.npz'.format(opt.fs // 1000)),allow_pickle=True)
 
     # Split to train and val
     train_sounds = []

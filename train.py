@@ -149,8 +149,8 @@ class Trainer:
             loss_list = []
             acc_list = []
             
-            loss1, acc1 = self.get_loss_and_acc(mix_input1, t_left)
-            loss2, acc2 = self.get_loss_and_acc(mix_input2, t_right)
+            loss1, acc1 = self.get_loss_and_acc(x_left, t_left)
+            loss2, acc2 = self.get_loss_and_acc(x_right, t_right)
             loss3, acc3 = self.get_loss_and_acc(mix_input1, t_left, t_right, ratio_left)
             loss4, acc4 = self.get_loss_and_acc(mix_input2, t_right, t_left, ratio_right)
 

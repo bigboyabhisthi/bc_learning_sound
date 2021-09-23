@@ -11,7 +11,7 @@ class SoundDataset(chainer.dataset.DatasetMixin):
         self.base = chainer.datasets.TupleDataset(sounds, labels)
         self.opt = opt
         self.train = train
-        self.mix = (opt.BC and train)
+        self.mix = False # (opt.BC and train)
         self.preprocess_funcs = self.preprocess_setup()
 
     def __len__(self):

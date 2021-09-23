@@ -138,7 +138,9 @@ def get_saliency(args, inputs, target):
     #   #sys.exit()
 
     unary = F.absolute(inputs.grad) # (64, 1, 1, ?)
-    unary = unary / F.max(unary.reshape(batch_size, -1), axis=0).reshape(1,1,1,-1)
+
+    # unary = unary / F.max(unary.reshape(batch_size, -1), axis=0).reshape(1,1,1,-1)
+    unary = unary / F.max(unary.reshape(batch_size, -1), axis=1).reshape(batch_size,1,1,1)
     # unary = unary / unary.reshape(batch_size, -1).max()
     return unary 
 

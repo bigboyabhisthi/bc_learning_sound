@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import random
 import copy
@@ -12,6 +13,15 @@ def padding(pad):
 
     return f
 
+def pad_train(inputLength):
+    def f(sound):
+        if len(sound) < inputLength:
+            pad = math.ceil((inputLength - len(sound)) / 2) 
+            return padding(pad)(sound)
+        
+        return sound
+    
+    return f
 
 def random_crop(size):
     def f(sound):

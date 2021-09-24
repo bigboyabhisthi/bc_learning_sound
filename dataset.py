@@ -1,4 +1,5 @@
 import os
+import math
 import numpy as np
 import random
 import chainer
@@ -24,7 +25,7 @@ class SoundDataset(chainer.dataset.DatasetMixin):
                 funcs += [U.random_scale(1.25)]
 
             funcs += [
-                # U.padding(self.opt.inputLength // 2),
+                U.pad_train(self.opt.inputLength),
                 U.random_crop(self.opt.inputLength),
                 U.normalize(32768.0),
             ]

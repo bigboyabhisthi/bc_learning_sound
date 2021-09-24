@@ -6,11 +6,12 @@ authors = ["Your Name <you@example.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = ">=3.7,<3.11"
 chainer = "^7.8.0"
 wavio = "^0.0.4"
 black = "^21.9b0"
 librosa = "^0.8.1"
+numpy = "^1.21.2"
 
 [tool.poetry.dev-dependencies]
 

@@ -10,6 +10,7 @@ python = "^3.7"
 chainer = "^7.8.0"
 wavio = "^0.0.4"
 black = "^21.9b0"
+librosa = "^0.8.1"
 
 [tool.poetry.dev-dependencies]
 

@@ -24,7 +24,7 @@ class SoundDataset(chainer.dataset.DatasetMixin):
                 funcs += [U.random_scale(1.25)]
 
             funcs += [
-                U.padding(self.opt.inputLength // 2),
+                # U.padding(self.opt.inputLength // 2),
                 U.random_crop(self.opt.inputLength),
                 U.normalize(32768.0),
             ]

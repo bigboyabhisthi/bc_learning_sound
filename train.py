@@ -114,45 +114,47 @@ class Trainer:
         if targets2 is not None:
             loss = loss * ratio + self.criterion(output, targets2) * (1 - ratio)
         loss = F.mean(loss)
-        
+
         acc = F.accuracy(output, targets1)
-        
+
         return loss, acc
-    
+
     def train(self, epoch):
         self.optimizer.lr = self.lr_schedule(epoch)
         train_loss = 0
         train_acc = 0
-        
+
         for i, batch in enumerate(self.train_iter):
 
             x_array, t_array = chainer.dataset.concat_examples(batch)
-            
+
             x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]))
             t = chainer.Variable(cuda.to_gpu(t_array))
-            
+
             #################################################################
             # Adding the ssmix function
             splitted = self.split_labeled_batch(x, t)
             x_left, t_left, x_right, t_right = splitted
-            
+
             if x_left is None:  # Odd length batch
                 continue
 
             mix_input1, ratio_left = self.augment(x_left, x_right, t_left, t_right)
             mix_input2, ratio_right = self.augment(x_right, x_left, t_right, t_left)
-            
+
             ###################################################################
 
             self.model.cleargrads()
-            
+
             loss_list = []
             acc_list = []
-            
+
             loss1, acc1 = self.get_loss_and_acc(x_left, t_left)
             loss2, acc2 = self.get_loss_and_acc(x_right, t_right)
             loss3, acc3 = self.get_loss_and_acc(mix_input1, t_left, t_right, ratio_left)
-            loss4, acc4 = self.get_loss_and_acc(mix_input2, t_right, t_left, ratio_right)
+            loss4, acc4 = self.get_loss_and_acc(
+                mix_input2, t_right, t_left, ratio_right
+            )
 
             loss_list = F.stack([loss1, loss2, loss3, loss4])
             acc_list = F.stack([acc1, acc2, acc3, acc4])
@@ -201,9 +203,9 @@ class Trainer:
                     (x_array.shape[0] * self.opt.nCrops, x_array.shape[2])
                 )
 
-            with chainer.using_config('volatile',True):
-              x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]))
-              t = chainer.Variable(cuda.to_gpu(t_array))
+            with chainer.using_config("volatile", True):
+                x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]))
+                t = chainer.Variable(cuda.to_gpu(t_array))
             y = F.softmax(self.model(x))
             y = F.reshape(
                 y, (y.shape[0] // self.opt.nCrops, self.opt.nCrops, y.shape[1])
@@ -231,8 +233,12 @@ class Trainer:
             # Skip any odd numbered batch
             return None, None, None, None
 
-        inputs_left, inputs_right = F.split_axis(inputs, axis=0, indices_or_sections=2, force_tuple=True)
-        labels_left, labels_right = F.split_axis(labels, axis=0, indices_or_sections=2, force_tuple=True)
+        inputs_left, inputs_right = F.split_axis(
+            inputs, axis=0, indices_or_sections=2, force_tuple=True
+        )
+        labels_left, labels_right = F.split_axis(
+            labels, axis=0, indices_or_sections=2, force_tuple=True
+        )
 
         return inputs_left, labels_left, inputs_right, labels_right
 
@@ -256,39 +262,44 @@ class Trainer:
 
         ratio = cuda.to_gpu(np.ones((batch_size,)))
 
-        #inputs_mixed=chainer.Variable(cuda.to_gpu(np.array([],dtype='float32')))
-        inputs_mixed=[]
+        # inputs_mixed=chainer.Variable(cuda.to_gpu(np.array([],dtype='float32')))
+        inputs_mixed = []
 
-        for i in range(batch_size//2):
+        for i in range(batch_size // 2):
 
-            saliency1_eg = saliency1[i] # (1,1,60k) - (1,1,1,60k)
+            saliency1_eg = saliency1[i]  # (1,1,60k) - (1,1,1,60k)
             saliency2_eg = saliency2[i]
 
-            
-            saliency1_pool = (
-                F.squeeze(F.squeeze(F.average_pooling_1d(saliency1_eg, mix_size, stride=1),axis=0),axis=0)
+            saliency1_pool = F.squeeze(
+                F.squeeze(
+                    F.average_pooling_1d(saliency1_eg, mix_size, stride=1), axis=0
+                ),
+                axis=0,
             )
-            
-            saliency2_pool = (
-                F.squeeze(F.squeeze(F.average_pooling_1d(saliency2_eg, mix_size, stride=1),axis=0),axis=0)
+
+            saliency2_pool = F.squeeze(
+                F.squeeze(
+                    F.average_pooling_1d(saliency2_eg, mix_size, stride=1), axis=0
+                ),
+                axis=0,
             )
 
             input1_idx = int(F.argmin(saliency1_pool).data)
             input2_idx = int(F.argmax(saliency2_pool).data)
 
-            left_span = inputs_aug[i, :, :,:input1_idx]
-            replace_span = inputs_aug[i, :, :,input2_idx:input2_idx + mix_size]
-            right_span= inputs_aug[i, :, :,input1_idx+mix_size:]
-  
-            mixed = F.concat([left_span,replace_span,right_span],axis=2)
+            left_span = inputs_aug[i, :, :, :input1_idx]
+            replace_span = inputs_aug[i, :, :, input2_idx : input2_idx + mix_size]
+            right_span = inputs_aug[i, :, :, input1_idx + mix_size :]
+
+            mixed = F.concat([left_span, replace_span, right_span], axis=2)
             inputs_mixed.append(mixed)
-            
+
             # inputs_aug[i, :, :, input1_idx:input1_idx + mix_size] = inputs2[
             #     i, :, :, input2_idx:input2_idx + mix_size
             # ]
-            
+
             ratio[i] = 1 - (mix_size / self.opt.inputLength)
-        
-        inputs_mixed = F.stack(inputs_mixed,axis=0)
+
+        inputs_mixed = F.stack(inputs_mixed, axis=0)
 
         return inputs_mixed, ratio

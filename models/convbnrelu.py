@@ -29,7 +29,7 @@ class ConvBNReLU(chainer.Chain):
 
     def __call__(self, x, train):
         h = self.conv(x)
-        with chainer.using_config('test',not train):
-          h = self.bn(h)
+        with chainer.using_config("test", not train):
+            h = self.bn(h)
 
         return F.relu(h)

@@ -96,10 +96,10 @@ def compute_gain(sound, fs, min_db=-80.0, mode="A_weighting"):
 
     gain = []
     for i in range(0, len(sound) - n_fft + 1, stride):
-        if mode == 'RMSE':
-            g = np.mean(sound[i: i + n_fft] ** 2)
-        elif mode == 'A_weighting':
-            spec = np.fft.rfft(np.hanning(n_fft + 1)[:-1] * sound[i: i + n_fft])
+        if mode == "RMSE":
+            g = np.mean(sound[i : i + n_fft] ** 2)
+        elif mode == "A_weighting":
+            spec = np.fft.rfft(np.hanning(n_fft + 1)[:-1] * sound[i : i + n_fft])
             power_spec = np.abs(spec) ** 2
             a_weighted_spec = power_spec * np.power(10, a_weight(fs, n_fft) / 10)
             g = np.sum(a_weighted_spec)
@@ -125,13 +125,13 @@ def mix(sound1, sound2, r, fs):
 
 def get_saliency(args, inputs, target):
     batch_size = target.shape[0]
-    model = args.get('model')
-  
+    model = args.get("model")
+
     model.cleargrads()
     output = model(inputs)
 
-    criterion = args.get('criterion')
-    loss = F.mean(criterion(output,target))
+    criterion = args.get("criterion")
+    loss = F.mean(criterion(output, target))
     loss.backward()
 
     # try:
@@ -140,12 +140,14 @@ def get_saliency(args, inputs, target):
     #   print(inputs.grad)
     #   #sys.exit()
 
-    unary = F.absolute(inputs.grad) # (64, 1, 1, ?)
+    unary = F.absolute(inputs.grad)  # (64, 1, 1, ?)
 
     # unary = unary / F.max(unary.reshape(batch_size, -1), axis=0).reshape(1,1,1,-1)
-    unary = unary / F.max(unary.reshape(batch_size, -1), axis=1).reshape(batch_size,1,1,1)
+    unary = unary / F.max(unary.reshape(batch_size, -1), axis=1).reshape(
+        batch_size, 1, 1, 1
+    )
     # unary = unary / unary.reshape(batch_size, -1).max()
-    return unary 
+    return unary
 
 
 def kl_divergence(y, t):

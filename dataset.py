@@ -11,7 +11,7 @@ class SoundDataset(chainer.dataset.DatasetMixin):
         self.base = chainer.datasets.TupleDataset(sounds, labels)
         self.opt = opt
         self.train = train
-        self.mix = False # (opt.BC and train)
+        self.mix = False  # (opt.BC and train)
         self.preprocess_funcs = self.preprocess_setup()
 
     def __len__(self):
@@ -73,7 +73,10 @@ class SoundDataset(chainer.dataset.DatasetMixin):
 
 
 def setup(opt, split):
-    dataset = np.load(os.path.join(opt.data, opt.dataset, 'wav{}.npz'.format(opt.fs // 1000)),allow_pickle=True)
+    dataset = np.load(
+        os.path.join(opt.data, opt.dataset, "wav{}.npz".format(opt.fs // 1000)),
+        allow_pickle=True,
+    )
 
     # Split to train and val
     train_sounds = []

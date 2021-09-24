@@ -9,7 +9,7 @@ import chainer
 import chainer.functions as F
 import chainer.links as L
 from .convbnrelu import ConvBNReLU
- 
+
 
 class EnvNet(chainer.Chain):
     def __init__(self, n_classes):
@@ -35,8 +35,8 @@ class EnvNet(chainer.Chain):
         h = self.conv4(h, self.train)
         h = F.max_pooling_2d(h, (1, 3))
 
-        with chainer.using_config('train',self.train):
-          h = F.dropout(F.relu(self.fc5(h)))
-          h = F.dropout(F.relu(self.fc6(h)))
+        with chainer.using_config("train", self.train):
+            h = F.dropout(F.relu(self.fc5(h)))
+            h = F.dropout(F.relu(self.fc6(h)))
 
         return self.fc7(h)

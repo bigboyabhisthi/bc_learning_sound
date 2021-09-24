@@ -4,7 +4,7 @@ import random
 import chainer
 
 import utils as U
-
+from sklearn.model_selection import train_test_split
 
 class SoundDataset(chainer.dataset.DatasetMixin):
     def __init__(self, sounds, labels, opt, train=True):
@@ -83,15 +83,25 @@ def setup(opt, split):
     train_labels = []
     val_sounds = []
     val_labels = []
-    for i in range(1, opt.nFolds + 1):
-        sounds = dataset[f"fold{i}"].item()["sounds"]
-        labels = dataset[f"fold{i}"].item()["labels"]
-        if i == split:
-            val_sounds.extend(sounds)
-            val_labels.extend(labels)
-        else:
-            train_sounds.extend(sounds)
-            train_labels.extend(labels)
+    
+    if opt.dataset in ["urdu"]:
+        train_sounds, val_sounds, train_labels, test_labels = train_test_split(
+            dataset["sounds"],
+            dataset["labels"],
+            test_size=0.2,
+            shuffle=True,
+            stratify=dataset["labels"],
+        )
+    else:
+        for i in range(1, opt.nFolds + 1):
+            sounds = dataset[f"fold{i}"].item()["sounds"]
+            labels = dataset[f"fold{i}"].item()["labels"]
+            if i == split:
+                val_sounds.extend(sounds)
+                val_labels.extend(labels)
+            else:
+                train_sounds.extend(sounds)
+                train_labels.extend(labels)
 
     # Iterator setup
     train_data = SoundDataset(train_sounds, train_labels, opt, train=True)

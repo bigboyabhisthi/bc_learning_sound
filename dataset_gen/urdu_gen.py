@@ -9,7 +9,7 @@ import wavio
 
 
 def main():
-    data_path = os.path.join(sys.argv[1], "urdu_ser")
+    data_path = os.path.join(sys.argv[1], "urdu")
     os.mkdir(data_path)
     fs_list = [16000, 44100]
 

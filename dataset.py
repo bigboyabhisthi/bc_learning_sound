@@ -85,7 +85,7 @@ def setup(opt, split):
     val_labels = []
     
     if opt.dataset in ["urdu"]:
-        train_sounds, val_sounds, train_labels, test_labels = train_test_split(
+        train_sounds, val_sounds, train_labels, val_labels = train_test_split(
             dataset["sounds"],
             dataset["labels"],
             test_size=0.2,

@@ -57,7 +57,7 @@ def create_dataset(src_path, dst_path):
     sounds = []
     labels = []
 
-    for wav_file in sorted(glob.glob(os.path.join(src_path, "**", "*.wav"))):
+    for wav_file in sorted(glob.glob(os.path.join(src_path, "*.wav"))):
       sound = wavio.read(wav_file).data.T[0]
       start = sound.nonzero()[0].min()
       end = sound.nonzero()[0].max()

@@ -288,7 +288,7 @@ class Trainer:
             input2_idx = int(F.argmax(saliency2_pool).data)
 
             left_span = inputs_aug[i, :, :, :input1_idx]
-            replace_span = inputs_aug[i, :, :, input2_idx : input2_idx + mix_size]
+            replace_span = inputs2[i, :, :, input2_idx : input2_idx + mix_size]
             right_span = inputs_aug[i, :, :, input1_idx + mix_size :]
 
             mixed = F.concat([left_span, replace_span, right_span], axis=2)

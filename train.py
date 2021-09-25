@@ -265,7 +265,7 @@ class Trainer:
         saliency1 = U.get_saliency(args, inputs_aug, target1)
         saliency2 = U.get_saliency(args, copy.deepcopy(inputs2), target2)
 
-        batch_size = self.opt.batchSize
+        batch_size = len(inputs1) * 2
         mix_size = max(int(self.opt.inputLength * (self.opt.ss_winsize / 100.0)), 1)
 
         ratio = cuda.to_gpu(np.ones((batch_size,)))

@@ -10,7 +10,7 @@ import wavio
 
 
 def main():
-    data_path = os.path.join(sys.argv[1], "savee")
+    data_path = os.path.join(sys.argv[1], "emodb")
     fs_list = [16000, 44100]
 
     # Convert sampling rate
@@ -31,7 +31,7 @@ def main():
 def convert_fs(src_path, dst_path, fs):
     print(f"* {src_path} -> {dst_path}")
     os.mkdir(dst_path)
-    for src_file in sorted(glob.glob(os.path.join(src_path, "**", "*.wav"))):
+    for src_file in sorted(glob.glob(os.path.join(src_path, "*.wav"))):
         dst_file = src_file.replace(os.path.dirname(src_file), dst_path)
         subprocess.call(
             f"ffmpeg -i {src_file} -ac 1 -ar {fs} -loglevel error -y {dst_file}",
@@ -41,7 +41,7 @@ def convert_fs(src_path, dst_path, fs):
 
 def create_dataset(src_path, dst_path):
     print(f"* {src_path} -> {dst_path}")
-    classes = {"a": 0, "h": 1, "n": 2, "sa": 3}
+    classes = {"A": 0, "F": 1, "N": 2, "T": 3}
     dataset = {}
 
     sounds = []
@@ -52,9 +52,7 @@ def create_dataset(src_path, dst_path):
       start = sound.nonzero()[0].min()
       end = sound.nonzero()[0].max()
       sound = sound[start : end + 1]
-      file_name = os.path.splitext(os.path.basename(wav_file))[0]
-      file_re = r"([a-z]+)\d+"
-      label = re.match(file_re, file_name, re.IGNORECASE).group(1)
+      label = os.path.splitext(wav_file)[0][-2]
       
       if label in classes:
         sounds.append(sound)

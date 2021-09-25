@@ -58,7 +58,7 @@ def parse():
     elif opt.dataset == "urbansound8k":  # urbansound8k
         opt.nClasses = 10
         opt.nFolds = 10
-    else: # urdu
+    else: # urdu savee emodb emovo
         opt.nClasses = 4
         opt.nFolds = 1
 
@@ -100,6 +100,18 @@ def parse():
         },
     }
     default_settings["urdu"] = {
+        "envnet": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
+        "envnetv2": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
+    }
+    default_settings["savee"] = {
+        "envnet": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
+        "envnetv2": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
+    }
+    default_settings["emodb"] = {
+        "envnet": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
+        "envnetv2": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
+    }
+    default_settings["emovo"] = {
         "envnet": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
         "envnetv2": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
     }

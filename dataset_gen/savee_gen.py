@@ -3,6 +3,7 @@ import re
 import subprocess
 import sys
 import time
+import uuid
 
 import glob
 import numpy as np
@@ -33,10 +34,7 @@ def convert_fs(src_path, dst_path, fs):
     os.mkdir(dst_path)
     for src_file in sorted(glob.glob(os.path.join(src_path, "**", "*.wav"))):
         dst_file = src_file.replace(os.path.dirname(src_file), dst_path)
-        dst_file = os.path.join(
-            os.path.splitext(dst_file)[0],
-            os.path.splitext(os.path.basename(dst_file))[0] + int(time.time())
-        ) 
+        dst_file = f"{os.path.splitext(dst_file)[0]}-{uuid.uuid5()}.wav"
         subprocess.call(
             f"ffmpeg -i {src_file} -ac 1 -ar {fs} -loglevel error -y {dst_file}",
             shell=True,
@@ -57,7 +55,7 @@ def create_dataset(src_path, dst_path):
         end = sound.nonzero()[0].max()
         sound = sound[start : end + 1]
         file_name = os.path.splitext(os.path.basename(wav_file))[0]
-        file_re = r"([a-z]+)\d+"
+        file_re = r"([a-z]+)\d+\-.*"
         label = re.match(file_re, file_name, re.IGNORECASE).group(1)
 
         if label in classes:

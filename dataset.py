@@ -78,6 +78,10 @@ def setup(opt, split):
         os.path.join(opt.data, opt.dataset, "wav{}.npz".format(opt.fs // 1000)),
         allow_pickle=True,
     )
+    
+    if len(dataset) % 2 != 0:
+        dataset["sounds"] = dataset["sounds"][:-1]
+        dataset["labels"] = dataset["labels"][:-1]
 
     # Split to train and val
     train_sounds = []

@@ -28,7 +28,7 @@ def main():
         convert_fs(
             os.path.join(data_path, "URDU-Dataset-master"),
             os.path.join(data_path, f"wav{fs // 1000}"),
-            fs
+            fs,
         )
 
     # Create npz files
@@ -58,13 +58,13 @@ def create_dataset(src_path, dst_path):
     labels = []
 
     for wav_file in sorted(glob.glob(os.path.join(src_path, "*.wav"))):
-      sound = wavio.read(wav_file).data.T[0]
-      start = sound.nonzero()[0].min()
-      end = sound.nonzero()[0].max()
-      sound = sound[start : end + 1]
-      label = classes.get(os.path.splitext(wav_file)[0].split("_")[-1][0])
-      sounds.append(sound)
-      labels.append(label)
+        sound = wavio.read(wav_file).data.T[0]
+        start = sound.nonzero()[0].min()
+        end = sound.nonzero()[0].max()
+        sound = sound[start : end + 1]
+        label = classes.get(os.path.splitext(wav_file)[0].split("_")[-1][0])
+        sounds.append(sound)
+        labels.append(label)
 
     dataset["sounds"] = sounds
     dataset["labels"] = labels

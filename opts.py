@@ -7,7 +7,7 @@ def parse():
 
     # General settings
     parser.add_argument(
-        "--dataset", required=True, choices=["esc10", "esc50", "urbansound8k", "urdu"]
+        "--dataset", required=True, choices=["esc10", "esc50", "urbansound8k", "urdu", "savee", "emodb"]
     )
     parser.add_argument("--netType", required=True, choices=["envnet", "envnetv2"])
     parser.add_argument("--data", required=True, help="Path to dataset")

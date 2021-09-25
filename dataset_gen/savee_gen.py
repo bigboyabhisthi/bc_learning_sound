@@ -18,7 +18,7 @@ def main():
         convert_fs(
             os.path.join(data_path, "unprocessed"),
             os.path.join(data_path, f"wav{fs // 1000}"),
-            fs
+            fs,
         )
 
     # Create npz files
@@ -48,17 +48,17 @@ def create_dataset(src_path, dst_path):
     labels = []
 
     for wav_file in sorted(glob.glob(os.path.join(src_path, "*.wav"))):
-      sound = wavio.read(wav_file).data.T[0]
-      start = sound.nonzero()[0].min()
-      end = sound.nonzero()[0].max()
-      sound = sound[start : end + 1]
-      file_name = os.path.splitext(os.path.basename(wav_file))[0]
-      file_re = r"([a-z]+)\d+"
-      label = re.match(file_re, file_name, re.IGNORECASE).group(1)
-      
-      if label in classes:
-        sounds.append(sound)
-        labels.append(classes.get(label))
+        sound = wavio.read(wav_file).data.T[0]
+        start = sound.nonzero()[0].min()
+        end = sound.nonzero()[0].max()
+        sound = sound[start : end + 1]
+        file_name = os.path.splitext(os.path.basename(wav_file))[0]
+        file_re = r"([a-z]+)\d+"
+        label = re.match(file_re, file_name, re.IGNORECASE).group(1)
+
+        if label in classes:
+            sounds.append(sound)
+            labels.append(classes.get(label))
 
     dataset["sounds"] = sounds
     dataset["labels"] = labels

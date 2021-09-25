@@ -16,7 +16,7 @@ def main():
     # Convert sampling rate
     for fs in fs_list:
         convert_fs(
-            os.path.join(data_path),
+            os.path.join(data_path, "unprocessed"),
             os.path.join(data_path, f"wav{fs // 1000}"),
             fs
         )

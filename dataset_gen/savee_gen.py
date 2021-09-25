@@ -2,12 +2,12 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 import glob
 import numpy as np
 import librosa
 import wavio
-
 
 def main():
     data_path = os.path.join(sys.argv[1], "savee")
@@ -33,6 +33,10 @@ def convert_fs(src_path, dst_path, fs):
     os.mkdir(dst_path)
     for src_file in sorted(glob.glob(os.path.join(src_path, "**", "*.wav"))):
         dst_file = src_file.replace(os.path.dirname(src_file), dst_path)
+        dst_file = os.path.join(
+            os.path.splitext(dst_file)[0],
+            os.path.splitext(os.path.basename(dst_file))[0] + int(time.time())
+        ) 
         subprocess.call(
             f"ffmpeg -i {src_file} -ac 1 -ar {fs} -loglevel error -y {dst_file}",
             shell=True,

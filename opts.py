@@ -20,7 +20,9 @@ def parse():
     parser.add_argument("--save", default="None", help="Directory to save the results")
     parser.add_argument("--testOnly", action="store_true")
     parser.add_argument("--gpu", type=int, default=0)
-    parser.add_argument("--ss_winsize", type=int, default=10)
+    parser.add_argument("--ss_winsize", type=int, default=20)
+    parser.add_argument("--stride_length",type=float,default=0.1,help="Fraction of seconds for stride")
+    parser.add_argument("--hyp_mean",type=bool,default=True,help="Uses hyperbolic gyro mid point to compute mean saliency")
 
     # Learning settings (default settings are defined below)
     parser.add_argument("--BC", action="store_true", help="BC learning")
@@ -41,6 +43,8 @@ def parse():
 
     # Testing settings
     parser.add_argument("--nCrops", type=int, default=10)
+
+    
 
     opt = parser.parse_args()
 
@@ -131,4 +135,7 @@ def display_info(opt):
     print("| schedule : {}".format(opt.schedule))
     print("| warmup   : {}".format(opt.warmup))
     print("| batchSize: {}".format(opt.batchSize))
+    print("| ss_winsize: {}".format(opt.ss_winsize))
+    print("| stride length: {}".format(opt.stride_length))
+    print("| hyperbolic_midpt: {}".format(opt.hyp_mean))
     print("+------------------------------+")

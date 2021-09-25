@@ -92,6 +92,14 @@ from chainer import cuda
 import chainer.functions as F
 import time
 import copy
+from geoopt.manifolds.stereographic import math as math1
+import torch
+import cupy
+import math
+from tqdm import tqdm
+from torch.utils.data import DataLoader, TensorDataset
+import torch.nn as nn
+ 
 
 import utils as U
 
@@ -270,27 +278,78 @@ class Trainer:
             saliency1_eg = saliency1[i]  # (1,1,60k) - (1,1,1,60k)
             saliency2_eg = saliency2[i]
 
-            saliency1_pool = F.squeeze(
-                F.squeeze(
-                    F.average_pooling_1d(saliency1_eg, mix_size, stride=1), axis=0
-                ),
-                axis=0,
-            )
+            stride_len = int(self.opt.stride_length *self.opt.fs)
 
-            saliency2_pool = F.squeeze(
-                F.squeeze(
-                    F.average_pooling_1d(saliency2_eg, mix_size, stride=1), axis=0
-                ),
-                axis=0,
-            )
+            if self.opt.hyp_mean:
 
-            input1_idx = int(F.argmin(saliency1_pool).data)
-            input2_idx = int(F.argmax(saliency2_pool).data)
+                # Hyperbolic sectional curvature
+                c = torch.tensor([1.0])
+
+                saliency1_eg = F.squeeze(F.squeeze(saliency1_eg,axis=0),axis=0)
+                saliency2_eg = F.squeeze(F.squeeze(saliency2_eg,axis=0),axis=0)
+
+                saliency1_eg = cupy.asnumpy(saliency1_eg.data)
+                saliency2_eg = cupy.asnumpy(saliency2_eg.data)
+
+                saliency1_eg = torch.from_numpy(saliency1_eg)
+                saliency2_eg = torch.from_numpy(saliency2_eg)
+
+                saliency1_proj = math1.project(saliency1_eg,k = c)
+                saliency1_proj = math1.expmap0(saliency1_proj,k =c)
+
+                saliency2_proj = math1.project(saliency2_eg,k = c)
+                saliency2_proj = math1.expmap0(saliency2_proj,k =c)
+
+                span_saliency1=[]
+                span_saliency2=[]
+
+                end_span_start = self.opt.inputLength - mix_size
+
+                for j in range(0 , end_span_start, stride_len):
+                    span_saliency1.append(saliency1_proj[j:j + mix_size])
+                    span_saliency2.append(saliency2_proj[j:j + mix_size])
+
+                
+                saliency1_list=[]
+                saliency2_list=[]
+
+                for j in range(0,len(span_saliency1)):
+                      
+                    mean1 = math1.weighted_midpoint(span_saliency1[j],k=c)
+                    mean2 = math1.weighted_midpoint(span_saliency2[j],k=c)
+
+                    saliency1_list.append(mean1)
+                    saliency2_list.append(mean2)
+
+                saliency1_list = torch.tensor(saliency1_list)
+                saliency2_list = torch.tensor(saliency2_list)
+
+                saliency1_list_euc = math1.logmap0(saliency1_list,k = c)
+                saliency1_list_euc = math1.project(saliency1_list_euc,k =c)
+                
+                saliency2_list_euc = math1.logmap0(saliency2_list,k = c)
+                saliency2_list_euc = math1.project(saliency2_list_euc,k =c)
+              
+                # To find the starting idx of the span
+                input1_idx = int(torch.argmin(saliency1_list_euc).data)*stride_len
+                input2_idx = int(torch.argmax(saliency2_list_euc).data)*stride_len
+
+            else:        
+                saliency1_pool = (
+                    F.squeeze(F.squeeze(F.average_pooling_1d(saliency1_eg, mix_size, stride=stride_len),axis=0),axis=0)
+                )
+                
+                saliency2_pool = (
+                    F.squeeze(F.squeeze(F.average_pooling_1d(saliency2_eg, mix_size, stride=stride_len),axis=0),axis=0)
+                )
+
+                input1_idx = int(F.argmin(saliency1_pool).data)*stride_len
+                input2_idx = int(F.argmax(saliency2_pool).data)*stride_len
 
             left_span = inputs_aug[i, :, :, :input1_idx]
             replace_span = inputs2[i, :, :, input2_idx : input2_idx + mix_size]
             right_span = inputs_aug[i, :, :, input1_idx + mix_size :]
-
+  
             mixed = F.concat([left_span, replace_span, right_span], axis=2)
             inputs_mixed.append(mixed)
 

@@ -55,11 +55,13 @@ def create_dataset(src_path, dst_path):
       file_name = os.path.splitext(os.path.basename(wav_file))[0]
       file_re = r"([a-z]+)\d+"
       label = classes.get(re.match(file_re, file_name, re.IGNORECASE).group(1))
-      sounds.append(sound)
-      labels.append(label)
+      
+      if label in classes:
+        sounds.append(sound)
+        labels.append(label)
 
-      dataset["sounds"] = sounds
-      dataset["labels"] = labels
+    dataset["sounds"] = sounds
+    dataset["labels"] = labels
 
     np.savez(dst_path, **dataset)
 

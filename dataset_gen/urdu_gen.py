@@ -66,8 +66,8 @@ def create_dataset(src_path, dst_path):
       sounds.append(sound)
       labels.append(label)
 
-      dataset["sounds"] = sounds
-      dataset["labels"] = labels
+    dataset["sounds"] = sounds
+    dataset["labels"] = labels
 
     np.savez(dst_path, **dataset)
 

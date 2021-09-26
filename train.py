@@ -134,21 +134,22 @@ class Trainer:
 
         for i, batch in enumerate(self.train_iter):
 
-            x_array, t_array = chainer.dataset.concat_examples(batch)
+            x_array, t_array, l_array = chainer.dataset.concat_examples(batch)
 
             x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]))
             t = chainer.Variable(cuda.to_gpu(t_array))
+            l = chainer.Variable(cuda.to_gpu(l_array))
 
             #################################################################
             # Adding the ssmix function
-            splitted = self.split_labeled_batch(x, t)
-            x_left, t_left, x_right, t_right = splitted
+            splitted = self.split_labeled_batch(x, t, l)
+            x_left, t_left, l_left, x_right, t_right, l_right = splitted
 
             if x_left is None:  # Odd length batch
                 continue
 
-            mix_input1, ratio_left = self.augment(x_left, x_right, t_left, t_right)
-            mix_input2, ratio_right = self.augment(x_right, x_left, t_right, t_left)
+            mix_input1, ratio_left = self.augment(x_left, x_right, t_left, t_right, l_left, l_right)
+            mix_input2, ratio_right = self.augment(x_right, x_left, t_right, t_left, l_left, l_right)
 
             ###################################################################
 
@@ -205,7 +206,7 @@ class Trainer:
         self.model.train = False
         val_acc = 0
         for batch in self.val_iter:
-            x_array, t_array = chainer.dataset.concat_examples(batch)
+            x_array, t_array, *_ = chainer.dataset.concat_examples(batch)
             if self.opt.nCrops > 1:
                 x_array = x_array.reshape(
                     (x_array.shape[0] * self.opt.nCrops, x_array.shape[2])
@@ -214,6 +215,7 @@ class Trainer:
             with chainer.using_config("volatile", True):
                 x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]))
                 t = chainer.Variable(cuda.to_gpu(t_array))
+                
             y = F.softmax(self.model(x))
             y = F.reshape(
                 y, (y.shape[0] // self.opt.nCrops, self.opt.nCrops, y.shape[1])
@@ -236,10 +238,10 @@ class Trainer:
 
         return self.opt.LR * np.power(0.1, decay)
 
-    def split_labeled_batch(self, inputs, labels):
+    def split_labeled_batch(self, inputs, labels, lens):
         if len(inputs) % 2 != 0:
             # Skip any odd numbered batch
-            return None, None, None, None
+            return None, None, None, None, None, None
 
         inputs_left, inputs_right = F.split_axis(
             inputs, axis=0, indices_or_sections=2, force_tuple=True
@@ -247,13 +249,16 @@ class Trainer:
         labels_left, labels_right = F.split_axis(
             labels, axis=0, indices_or_sections=2, force_tuple=True
         )
+        lens_left, lens_right = F.split_axis(
+            lens, axis=0, indices_or_sections=2, force_tuple=True
+        )
 
-        return inputs_left, labels_left, inputs_right, labels_right
+        return inputs_left, labels_left, lens_left, inputs_right, labels_right, lens_right
 
-    def augment(self, inputs1, inputs2, target1, target2):
-        return self.ssmix(inputs1, inputs2, target1, target2)
+    def augment(self, inputs1, inputs2, target1, target2, l_left, l_right):
+        return self.ssmix(inputs1, inputs2, target1, target2, l_left, l_right)
 
-    def ssmix(self, inputs1, inputs2, target1, target2):
+    def ssmix(self, inputs1, inputs2, target1, target2, l_left, l_right):
         inputs_aug = copy.deepcopy(inputs1)
 
         args = {
@@ -277,9 +282,28 @@ class Trainer:
 
             saliency1_eg = saliency1[i]  # (1,1,60k) - (1,1,1,60k)
             saliency2_eg = saliency2[i]
+            
+            mix_ratio = 1 - (mix_size / (self.opt.inputLength))
 
             stride_len = int(self.opt.stride_length *self.opt.fs)
 
+            start_idx1 = 0
+            start_idx2 = 0
+            
+            if self.opt.ignorePad: 
+                nopad_start1 = 0 if l_left[i] >= self.opt.inputLength else (self.opt.inputLength - l_left[i]) // 2
+                nopad_start2 = 0 if l_right[i] >= self.opt.inputLength else (self.opt.inputLength - l_right[i]) // 2
+                nopad_end1 = nopad_start1 + l_left[i]
+                nopad_end2 = nopad_start2 + l_right[i]
+                
+                saliency1_eg = saliency1_eg[nopad_start1:nopad_end1]
+                saliency2_eg = saliency2_eg[nopad_start2:nopad_end2]
+                
+                start_idx1 = nopad_start1
+                start_idx2 = nopad_start2
+                
+                mix_ratio = 1 - mix_size / l_left[i]
+                
             if self.opt.hyp_mean == 1:
 
                 # Hyperbolic sectional curvature
@@ -309,13 +333,22 @@ class Trainer:
 
                 span_saliency1=[]
                 span_saliency2=[]
+                    
+                if self.opt.ignorePad:
+                    end_span_start1 = start_idx1 + l_left[i] - mix_size
+                    end_span_start2 = start_idx2 + l_right[i] - mix_size
+                    
+                    for j in range(0 , end_span_start1, stride_len):
+                        span_saliency1.append(saliency1_proj[j:j + mix_size])
+                        
+                    for j in range(0 , end_span_start2, stride_len):
+                        span_saliency2.append(saliency2_proj[j:j + mix_size])
+                else:
+                    end_span_start = self.opt.inputLength - mix_size
 
-                end_span_start = self.opt.inputLength - mix_size
-
-                for j in range(0 , end_span_start, stride_len):
-                    span_saliency1.append(saliency1_proj[j:j + mix_size])
-                    span_saliency2.append(saliency2_proj[j:j + mix_size])
-
+                    for j in range(0 , end_span_start, stride_len):
+                        span_saliency1.append(saliency1_proj[j:j + mix_size])
+                        span_saliency2.append(saliency2_proj[j:j + mix_size])
 
                 saliency1_list=[]
                 saliency2_list=[]
@@ -326,12 +359,21 @@ class Trainer:
                 span_saliency1 = span_saliency1.to(device="cuda")
                 span_saliency2 = span_saliency2.to(device="cuda")
 
-                for j in range(0,len(span_saliency1)):
-                    mean1 = math1.weighted_midpoint(span_saliency1[j],k=c) # [13330,1]
-                    mean2 = math1.weighted_midpoint(span_saliency2[j],k=c)
+                if self.opt.ignorePad:
+                    for j in range(0,len(span_saliency1)):
+                        mean1 = math1.weighted_midpoint(span_saliency1[j],k=c) # [13330,1]
+                        saliency1_list.append(mean1)
+                    
+                    for j in range(0,len(span_saliency2)):
+                        mean2 = math1.weighted_midpoint(span_saliency2[j],k=c)
+                        saliency2_list.append(mean2)
+                else:
+                    for j in range(0,len(span_saliency1)):
+                        mean1 = math1.weighted_midpoint(span_saliency1[j],k=c) # [13330,1]
+                        mean2 = math1.weighted_midpoint(span_saliency2[j],k=c)
 
-                    saliency1_list.append(mean1)
-                    saliency2_list.append(mean2)
+                        saliency1_list.append(mean1)
+                        saliency2_list.append(mean2)
 
                 saliency1_list = torch.tensor(saliency1_list)
                 saliency2_list = torch.tensor(saliency2_list)
@@ -352,10 +394,10 @@ class Trainer:
                 saliency2_list_euc = torch.squeeze(saliency2_list_euc)   
 
                 # To find the starting idx of the span
-                input1_idx = int(torch.argmin(saliency1_list_euc).data)*stride_len
-                input2_idx = int(torch.argmax(saliency2_list_euc).data)*stride_len
+                input1_idx = int(torch.argmin(saliency1_list_euc).data)*stride_len + start_idx1
+                input2_idx = int(torch.argmax(saliency2_list_euc).data)*stride_len + start_idx2
 
-            else:      
+            else:
                 saliency1_pool = (
                     F.squeeze(F.squeeze(F.average_pooling_1d(saliency1_eg, mix_size, stride=stride_len),axis=0),axis=0)
                 )
@@ -364,8 +406,8 @@ class Trainer:
                     F.squeeze(F.squeeze(F.average_pooling_1d(saliency2_eg, mix_size, stride=stride_len),axis=0),axis=0)
                 )
 
-                input1_idx = int(F.argmin(saliency1_pool).data)*stride_len
-                input2_idx = int(F.argmax(saliency2_pool).data)*stride_len
+                input1_idx = int(F.argmin(saliency1_pool).data)*stride_len + start_idx1
+                input2_idx = int(F.argmax(saliency2_pool).data)*stride_len + start_idx2
 
             left_span = inputs_aug[i, :, :, :input1_idx]
             replace_span = inputs2[i, :, :, input2_idx : input2_idx + mix_size]
@@ -378,7 +420,7 @@ class Trainer:
             #     i, :, :, input2_idx:input2_idx + mix_size
             # ]
 
-            ratio[i] = 1 - (mix_size / self.opt.inputLength)
+            ratio[i] = mix_ratio
 
         inputs_mixed = F.stack(inputs_mixed, axis=0)
 

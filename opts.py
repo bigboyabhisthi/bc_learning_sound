@@ -21,6 +21,7 @@ def parse():
     parser.add_argument("--testOnly", action="store_true")
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--ss_winsize", type=int, default=20)
+    parser.add_argument("--ignorePad", type=int, default=0, help="Ignore padding when computing saliency", choices=[0, 1])
     parser.add_argument("--stride_length",type=float,default=0.1,help="Fraction of seconds for stride")
     parser.add_argument("--hyp_mean",type=int,default=0,help="Uses hyperbolic gyro mid point to compute mean saliency")
 
@@ -165,5 +166,6 @@ def display_info(opt):
     print("| batchSize: {}".format(opt.batchSize))
     print("| ss_winsize: {}".format(opt.ss_winsize))
     print("| stride length: {}".format(opt.stride_length))
+    print("| ignore pad: {}".format(opt.ignorePad))
     print("| hyperbolic_midpt: {}".format(opt.hyp_mean))
     print("+------------------------------+")

@@ -64,13 +64,14 @@ class SoundDataset(chainer.dataset.DatasetMixin):
 
         else:  # Training phase of standard learning or testing phase
             sound, label = self.base[i]
+            unprocessed_sound_len = min(self.opt.inputLength, len(sound))
             sound = self.preprocess(sound).astype(np.float32)
             label = np.array(label, dtype=np.int32)
 
         if self.train and self.opt.strongAugment:
             sound = U.random_gain(6)(sound).astype(np.float32)
 
-        return sound, label
+        return sound, label, unprocessed_sound_len
 
 
 def setup(opt, split):

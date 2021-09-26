@@ -42,7 +42,7 @@ def convert_fs(src_path, dst_path, fs):
 
 def create_dataset(src_path, dst_path):
     print(f"* {src_path} -> {dst_path}")
-    classes = {"rab": 0, "gio": 1, "neu": 2, "tri": 3}
+    classes = {"rab": 0, "gio": 1, "neu": 2, "tri": 3, "dis": 4, "pau": 5, "sor": 6}
     dataset = {}
 
     sounds = []

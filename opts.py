@@ -22,7 +22,7 @@ def parse():
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--ss_winsize", type=int, default=20)
     parser.add_argument("--stride_length",type=float,default=0.1,help="Fraction of seconds for stride")
-    parser.add_argument("--hyp_mean",type=bool,default=True,help="Uses hyperbolic gyro mid point to compute mean saliency")
+    parser.add_argument("--hyp_mean",type=int,default=0,help="Uses hyperbolic gyro mid point to compute mean saliency", choices=[0, 1])
 
     # Learning settings (default settings are defined below)
     parser.add_argument("--BC", action="store_true", help="BC learning")

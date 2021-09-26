@@ -7,7 +7,7 @@ def parse():
 
     # General settings
     parser.add_argument(
-        "--dataset", required=True, choices=["esc10", "esc50", "urbansound8k"]
+        "--dataset", required=True, choices=["esc10", "esc50", "urbansound8k", "emovo"]
     )
     parser.add_argument("--netType", required=True, choices=["envnet", "envnetv2"])
     parser.add_argument("--data", required=True, help="Path to dataset")
@@ -50,6 +50,9 @@ def parse():
     elif opt.dataset == "esc10":
         opt.nClasses = 10
         opt.nFolds = 5
+    elif opt.dataset == "emovo":
+      opt.nClasses = 7
+      opt.nFolds = 1
     else:  # urbansound8k
         opt.nClasses = 10
         opt.nFolds = 10
@@ -82,6 +85,7 @@ def parse():
         "envnet": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
         "envnetv2": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
     }
+    default_settings["emovo"] = default_settings["esc10"]
     default_settings["urbansound8k"] = {
         "envnet": {"nEpochs": 400, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
         "envnetv2": {

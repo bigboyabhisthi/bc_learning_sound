@@ -58,8 +58,20 @@ def parse():
     elif opt.dataset == "urbansound8k":  # urbansound8k
         opt.nClasses = 10
         opt.nFolds = 10
-    else: # urdu savee emodb emovo
+    elif opt.dataset == "urdu": # urdu savee emodb emovo
         opt.nClasses = 4
+        opt.nFolds = 1
+    elif opt.dataset == "emovo":
+        opt.nClasses = 7
+        opt.nFolds = 1
+    elif opt.dataset == "emodb":
+        opt.nClasses = 8
+        opt.nFolds = 1
+    elif opt.dataset == "savee":
+        opt.nClasses = 7
+        opt.nFolds = 1
+    elif opt.dataset == "shemo":
+        opt.nClasses = 5
         opt.nFolds = 1
 
     if opt.split == -1:

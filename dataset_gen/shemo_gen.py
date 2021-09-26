@@ -68,7 +68,7 @@ def create_dataset(src_path, dst_path):
         start = sound.nonzero()[0].min()
         end = sound.nonzero()[0].max()
         sound = sound[start : end + 1]
-        label = os.path.splitext(os.path.basename(wav_file))[-3]
+        label = os.path.splitext(os.path.basename(wav_file))[0][-3]
         
         if label in classes:
             sounds.append(sound)

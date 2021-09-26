@@ -280,10 +280,11 @@ class Trainer:
 
             stride_len = int(self.opt.stride_length *self.opt.fs)
 
-            if self.opt.hyp_mean:
+            if self.opt.hyp_mean == 1:
 
                 # Hyperbolic sectional curvature
                 c = torch.tensor([1.0])
+                c = c.to(device="cuda")
 
                 saliency1_eg = F.squeeze(F.squeeze(saliency1_eg,axis=0),axis=0)
                 saliency2_eg = F.squeeze(F.squeeze(saliency2_eg,axis=0),axis=0)
@@ -293,6 +294,12 @@ class Trainer:
 
                 saliency1_eg = torch.from_numpy(saliency1_eg)
                 saliency2_eg = torch.from_numpy(saliency2_eg)
+
+                saliency1_eg = torch.unsqueeze(saliency1_eg,1)
+                saliency2_eg = torch.unsqueeze(saliency2_eg,1)
+
+                saliency1_eg = saliency1_eg.to(device="cuda")
+                saliency2_eg = saliency2_eg.to(device="cuda")
 
                 saliency1_proj = math1.project(saliency1_eg,k = c)
                 saliency1_proj = math1.expmap0(saliency1_proj,k =c)
@@ -309,13 +316,18 @@ class Trainer:
                     span_saliency1.append(saliency1_proj[j:j + mix_size])
                     span_saliency2.append(saliency2_proj[j:j + mix_size])
 
-                
+
                 saliency1_list=[]
                 saliency2_list=[]
 
+                span_saliency1 = torch.stack(span_saliency1)
+                span_saliency2 = torch.stack(span_saliency2)
+
+                span_saliency1 = span_saliency1.to(device="cuda")
+                span_saliency2 = span_saliency2.to(device="cuda")
+
                 for j in range(0,len(span_saliency1)):
-                      
-                    mean1 = math1.weighted_midpoint(span_saliency1[j],k=c)
+                    mean1 = math1.weighted_midpoint(span_saliency1[j],k=c) # [13330,1]
                     mean2 = math1.weighted_midpoint(span_saliency2[j],k=c)
 
                     saliency1_list.append(mean1)
@@ -324,17 +336,26 @@ class Trainer:
                 saliency1_list = torch.tensor(saliency1_list)
                 saliency2_list = torch.tensor(saliency2_list)
 
+                saliency1_list = torch.unsqueeze(saliency1_list,1) # [13,1]
+                saliency2_list = torch.unsqueeze(saliency2_list,1)
+
+                saliency1_list = saliency1_list.to(device="cuda")
+                saliency2_list = saliency2_list.to(device="cuda")
+                
                 saliency1_list_euc = math1.logmap0(saliency1_list,k = c)
                 saliency1_list_euc = math1.project(saliency1_list_euc,k =c)
                 
                 saliency2_list_euc = math1.logmap0(saliency2_list,k = c)
                 saliency2_list_euc = math1.project(saliency2_list_euc,k =c)
-              
+
+                saliency1_list_euc = torch.squeeze(saliency1_list_euc)
+                saliency2_list_euc = torch.squeeze(saliency2_list_euc)   
+
                 # To find the starting idx of the span
                 input1_idx = int(torch.argmin(saliency1_list_euc).data)*stride_len
                 input2_idx = int(torch.argmax(saliency2_list_euc).data)*stride_len
 
-            else:        
+            else:      
                 saliency1_pool = (
                     F.squeeze(F.squeeze(F.average_pooling_1d(saliency1_eg, mix_size, stride=stride_len),axis=0),axis=0)
                 )

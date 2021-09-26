@@ -78,10 +78,6 @@ def setup(opt, split):
         os.path.join(opt.data, opt.dataset, "wav{}.npz".format(opt.fs // 1000)),
         allow_pickle=True,
     )
-    
-    if len(dataset) % 2 != 0:
-        dataset["sounds"] = dataset["sounds"][:-1]
-        dataset["labels"] = dataset["labels"][:-1]
 
     # Split to train and val
     train_sounds = []
@@ -89,7 +85,7 @@ def setup(opt, split):
     val_sounds = []
     val_labels = []
     
-    if opt.dataset in ["urdu", "savee", "emodb", "emovo"]:
+    if opt.dataset in ["urdu", "savee", "emodb", "emovo", "shemo"]:
         train_sounds, val_sounds, train_labels, val_labels = train_test_split(
             dataset["sounds"],
             dataset["labels"],
@@ -97,6 +93,10 @@ def setup(opt, split):
             shuffle=True,
             stratify=dataset["labels"],
         )
+        
+        if len(train_sounds) % 2 != 0:
+            train_sounds = train_sounds[:-1]
+            train_labels = train_labels[:-1]
     else:
         for i in range(1, opt.nFolds + 1):
             sounds = dataset[f"fold{i}"].item()["sounds"]

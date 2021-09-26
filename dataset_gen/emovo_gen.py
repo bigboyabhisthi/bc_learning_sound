@@ -11,7 +11,7 @@ import librosa
 import wavio
 
 def main():
-    data_path = os.path.join(sys.argv[1], "savee")
+    data_path = os.path.join(sys.argv[1], "emovo")
     fs_list = [16000, 44100]
 
     # Convert sampling rate
@@ -34,7 +34,6 @@ def convert_fs(src_path, dst_path, fs):
     os.mkdir(dst_path)
     for src_file in sorted(glob.glob(os.path.join(src_path, "**", "*.wav"))):
         dst_file = src_file.replace(os.path.dirname(src_file), dst_path)
-        dst_file = f"{os.path.splitext(dst_file)[0]}-{uuid.uuid4()}.wav"
         subprocess.call(
             f"ffmpeg -i {src_file} -ac 1 -ar {fs} -loglevel error -y {dst_file}",
             shell=True,
@@ -43,7 +42,7 @@ def convert_fs(src_path, dst_path, fs):
 
 def create_dataset(src_path, dst_path):
     print(f"* {src_path} -> {dst_path}")
-    classes = {"a": 0, "h": 1, "n": 2, "sa": 3}
+    classes = {"rab": 0, "gio": 1, "neu": 2, "tri": 3}
     dataset = {}
 
     sounds = []

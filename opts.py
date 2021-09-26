@@ -7,7 +7,7 @@ def parse():
 
     # General settings
     parser.add_argument(
-        "--dataset", required=True, choices=["esc10", "esc50", "urbansound8k", "urdu", "savee", "emodb"]
+        "--dataset", required=True, choices=["esc10", "esc50", "urbansound8k", "urdu", "savee", "emodb", "emovo", "shemo"]
     )
     parser.add_argument("--netType", required=True, choices=["envnet", "envnetv2"])
     parser.add_argument("--data", required=True, help="Path to dataset")
@@ -112,6 +112,10 @@ def parse():
         "envnetv2": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
     }
     default_settings["emovo"] = {
+        "envnet": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
+        "envnetv2": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
+    }
+    default_settings["shemo"] = {
         "envnet": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
         "envnetv2": {"nEpochs": 600, "LR": 0.01, "schedule": [0.5, 0.75], "warmup": 0},
     }

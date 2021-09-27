@@ -301,8 +301,8 @@ class Trainer:
                 nopad_end1 = nopad_start1 + l1
                 nopad_end2 = nopad_start2 + l2
                 
-                saliency1_eg = saliency1_eg[nopad_start1:nopad_end1]
-                saliency2_eg = saliency2_eg[nopad_start2:nopad_end2]
+                saliency1_eg = saliency1_eg[:, :, nopad_start1:nopad_end1]
+                saliency2_eg = saliency2_eg[:, :, nopad_start2:nopad_end2]
                 
                 start_idx1 = nopad_start1
                 start_idx2 = nopad_start2

@@ -280,6 +280,8 @@ class Trainer:
 
         for i in range(batch_size // 2):
 
+            l1 = l_left[i].data
+            l2 = l_right[i].data
             saliency1_eg = saliency1[i]  # (1,1,60k) - (1,1,1,60k)
             saliency2_eg = saliency2[i]
             
@@ -291,10 +293,13 @@ class Trainer:
             start_idx2 = 0
             
             if self.opt.ignorePad: 
-                nopad_start1 = 0 if l_left[i] >= self.opt.inputLength else (self.opt.inputLength - l_left[i]) // 2
-                nopad_start2 = 0 if l_right[i] >= self.opt.inputLength else (self.opt.inputLength - l_right[i]) // 2
-                nopad_end1 = nopad_start1 + l_left[i]
-                nopad_end2 = nopad_start2 + l_right[i]
+                l1 = l_left[i].data
+                l_left2 = l_right[i].data
+                
+                nopad_start1 = 0 if l1 >= self.opt.inputLength else (self.opt.inputLength - l1) // 2
+                nopad_start2 = 0 if l2 >= self.opt.inputLength else (self.opt.inputLength - l2) // 2
+                nopad_end1 = nopad_start1 + l1
+                nopad_end2 = nopad_start2 + l2
                 
                 saliency1_eg = saliency1_eg[nopad_start1:nopad_end1]
                 saliency2_eg = saliency2_eg[nopad_start2:nopad_end2]
@@ -302,7 +307,7 @@ class Trainer:
                 start_idx1 = nopad_start1
                 start_idx2 = nopad_start2
                 
-                mix_ratio = 1 - mix_size / l_left[i]
+                mix_ratio = 1 - mix_size / l1
                 
             if self.opt.hyp_mean == 1:
 
@@ -335,8 +340,8 @@ class Trainer:
                 span_saliency2=[]
                     
                 if self.opt.ignorePad:
-                    end_span_start1 = start_idx1 + l_left[i] - mix_size
-                    end_span_start2 = start_idx2 + l_right[i] - mix_size
+                    end_span_start1 = start_idx1 + l1 - mix_size
+                    end_span_start2 = start_idx2 + l2 - mix_size
                     
                     for j in range(0 , end_span_start1, stride_len):
                         span_saliency1.append(saliency1_proj[j:j + mix_size])

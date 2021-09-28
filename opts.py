@@ -17,6 +17,8 @@ def parse():
         default=-1,
         help="esc: 1-5, urbansound: 1-10 (-1: run on all splits)",
     )
+    parser.add_argument("--seed_val",type=int,default=42,help="Seed value for train-val split")
+
     parser.add_argument("--save", default="None", help="Directory to save the results")
     parser.add_argument("--testOnly", action="store_true")
     parser.add_argument("--gpu", type=int, default=0)

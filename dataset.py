@@ -93,6 +93,7 @@ def setup(opt, split):
             test_size=0.2,
             shuffle=True,
             stratify=dataset["labels"],
+            random_state = self.opt.seed_val
         )
         
         if len(train_sounds) % 2 != 0:

@@ -25,7 +25,9 @@ def main():
             shell=True,
         )
         subprocess.call(
-            "unzip -d {} {}".format(os.path.join(data_path, g), os.path.join(data_path, f"{g}.zip")),
+            "unzip -d {} {}".format(
+                os.path.join(data_path, g), os.path.join(data_path, f"{g}.zip")
+            ),
             shell=True,
         )
         os.remove(os.path.join(data_path, f"{g}.zip"))
@@ -69,7 +71,7 @@ def create_dataset(src_path, dst_path):
         end = sound.nonzero()[0].max()
         sound = sound[start : end + 1]
         label = os.path.splitext(os.path.basename(wav_file))[0][-3]
-        
+
         if label in classes:
             sounds.append(sound)
             labels.append(classes.get(label))

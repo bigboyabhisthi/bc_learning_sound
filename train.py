@@ -99,7 +99,7 @@ import math
 from tqdm import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 import torch.nn as nn
- 
+
 
 import utils as U
 
@@ -148,8 +148,12 @@ class Trainer:
             if x_left is None:  # Odd length batch
                 continue
 
-            mix_input1, ratio_left = self.augment(x_left, x_right, t_left, t_right, l_left, l_right)
-            mix_input2, ratio_right = self.augment(x_right, x_left, t_right, t_left, l_left, l_right)
+            mix_input1, ratio_left = self.augment(
+                x_left, x_right, t_left, t_right, l_left, l_right
+            )
+            mix_input2, ratio_right = self.augment(
+                x_right, x_left, t_right, t_left, l_left, l_right
+            )
 
             ###################################################################
 
@@ -215,7 +219,7 @@ class Trainer:
             with chainer.using_config("volatile", True):
                 x = chainer.Variable(cuda.to_gpu(x_array[:, None, None, :]))
                 t = chainer.Variable(cuda.to_gpu(t_array))
-                
+
             y = F.softmax(self.model(x))
             y = F.reshape(
                 y, (y.shape[0] // self.opt.nCrops, self.opt.nCrops, y.shape[1])
@@ -253,7 +257,14 @@ class Trainer:
             lens, axis=0, indices_or_sections=2, force_tuple=True
         )
 
-        return inputs_left, labels_left, lens_left, inputs_right, labels_right, lens_right
+        return (
+            inputs_left,
+            labels_left,
+            lens_left,
+            inputs_right,
+            labels_right,
+            lens_right,
+        )
 
     def augment(self, inputs1, inputs2, target1, target2, l_left, l_right):
         return self.ssmix(inputs1, inputs2, target1, target2, l_left, l_right)
@@ -284,39 +295,47 @@ class Trainer:
             l2 = l_right[i].data
             saliency1_eg = saliency1[i]  # (1,1,60k) - (1,1,1,60k)
             saliency2_eg = saliency2[i]
-            
+
             mix_ratio = 1 - (mix_size / (self.opt.inputLength))
 
-            stride_len = int(self.opt.stride_length *self.opt.fs)
+            stride_len = int(self.opt.stride_length * self.opt.fs)
 
             start_idx1 = 0
             start_idx2 = 0
-            
-            if self.opt.ignorePad: 
+
+            if self.opt.ignorePad:
                 l1 = l_left[i].data
                 l_left2 = l_right[i].data
-                
-                nopad_start1 = 0 if l1 >= self.opt.inputLength else (self.opt.inputLength - l1) // 2
-                nopad_start2 = 0 if l2 >= self.opt.inputLength else (self.opt.inputLength - l2) // 2
+
+                nopad_start1 = (
+                    0
+                    if l1 >= self.opt.inputLength
+                    else (self.opt.inputLength - l1) // 2
+                )
+                nopad_start2 = (
+                    0
+                    if l2 >= self.opt.inputLength
+                    else (self.opt.inputLength - l2) // 2
+                )
                 nopad_end1 = nopad_start1 + l1
                 nopad_end2 = nopad_start2 + l2
-                
+
                 saliency1_eg = saliency1_eg[:, :, nopad_start1:nopad_end1]
                 saliency2_eg = saliency2_eg[:, :, nopad_start2:nopad_end2]
-                
+
                 start_idx1 = nopad_start1
                 start_idx2 = nopad_start2
-                
+
                 mix_ratio = 1 - mix_size / l1
-                
+
             if self.opt.hyp_mean == 1:
 
                 # Hyperbolic sectional curvature
                 c = torch.tensor([1.0])
                 c = c.to(device="cuda")
 
-                saliency1_eg = F.squeeze(F.squeeze(saliency1_eg,axis=0),axis=0)
-                saliency2_eg = F.squeeze(F.squeeze(saliency2_eg,axis=0),axis=0)
+                saliency1_eg = F.squeeze(F.squeeze(saliency1_eg, axis=0), axis=0)
+                saliency2_eg = F.squeeze(F.squeeze(saliency2_eg, axis=0), axis=0)
 
                 saliency1_eg = cupy.asnumpy(saliency1_eg.data)
                 saliency2_eg = cupy.asnumpy(saliency2_eg.data)
@@ -324,39 +343,39 @@ class Trainer:
                 saliency1_eg = torch.from_numpy(saliency1_eg)
                 saliency2_eg = torch.from_numpy(saliency2_eg)
 
-                saliency1_eg = torch.unsqueeze(saliency1_eg,1)
-                saliency2_eg = torch.unsqueeze(saliency2_eg,1)
+                saliency1_eg = torch.unsqueeze(saliency1_eg, 1)
+                saliency2_eg = torch.unsqueeze(saliency2_eg, 1)
 
                 saliency1_eg = saliency1_eg.to(device="cuda")
                 saliency2_eg = saliency2_eg.to(device="cuda")
 
-                saliency1_proj = math1.project(saliency1_eg,k = c)
-                saliency1_proj = math1.expmap0(saliency1_proj,k =c)
+                saliency1_proj = math1.project(saliency1_eg, k=c)
+                saliency1_proj = math1.expmap0(saliency1_proj, k=c)
 
-                saliency2_proj = math1.project(saliency2_eg,k = c)
-                saliency2_proj = math1.expmap0(saliency2_proj,k =c)
+                saliency2_proj = math1.project(saliency2_eg, k=c)
+                saliency2_proj = math1.expmap0(saliency2_proj, k=c)
 
-                span_saliency1=[]
-                span_saliency2=[]
-                    
+                span_saliency1 = []
+                span_saliency2 = []
+
                 if self.opt.ignorePad:
                     end_span_start1 = start_idx1 + l1 - mix_size
                     end_span_start2 = start_idx2 + l2 - mix_size
-                    
-                    for j in range(0 , end_span_start1, stride_len):
-                        span_saliency1.append(saliency1_proj[j:j + mix_size])
-                        
-                    for j in range(0 , end_span_start2, stride_len):
-                        span_saliency2.append(saliency2_proj[j:j + mix_size])
+
+                    for j in range(0, end_span_start1, stride_len):
+                        span_saliency1.append(saliency1_proj[j : j + mix_size])
+
+                    for j in range(0, end_span_start2, stride_len):
+                        span_saliency2.append(saliency2_proj[j : j + mix_size])
                 else:
                     end_span_start = self.opt.inputLength - mix_size
 
-                    for j in range(0 , end_span_start, stride_len):
-                        span_saliency1.append(saliency1_proj[j:j + mix_size])
-                        span_saliency2.append(saliency2_proj[j:j + mix_size])
+                    for j in range(0, end_span_start, stride_len):
+                        span_saliency1.append(saliency1_proj[j : j + mix_size])
+                        span_saliency2.append(saliency2_proj[j : j + mix_size])
 
-                saliency1_list=[]
-                saliency2_list=[]
+                saliency1_list = []
+                saliency2_list = []
 
                 span_saliency1 = torch.stack(span_saliency1)
                 span_saliency2 = torch.stack(span_saliency2)
@@ -365,17 +384,21 @@ class Trainer:
                 span_saliency2 = span_saliency2.to(device="cuda")
 
                 if self.opt.ignorePad:
-                    for j in range(0,len(span_saliency1)):
-                        mean1 = math1.weighted_midpoint(span_saliency1[j],k=c) # [13330,1]
+                    for j in range(0, len(span_saliency1)):
+                        mean1 = math1.weighted_midpoint(
+                            span_saliency1[j], k=c
+                        )  # [13330,1]
                         saliency1_list.append(mean1)
-                    
-                    for j in range(0,len(span_saliency2)):
-                        mean2 = math1.weighted_midpoint(span_saliency2[j],k=c)
+
+                    for j in range(0, len(span_saliency2)):
+                        mean2 = math1.weighted_midpoint(span_saliency2[j], k=c)
                         saliency2_list.append(mean2)
                 else:
-                    for j in range(0,len(span_saliency1)):
-                        mean1 = math1.weighted_midpoint(span_saliency1[j],k=c) # [13330,1]
-                        mean2 = math1.weighted_midpoint(span_saliency2[j],k=c)
+                    for j in range(0, len(span_saliency1)):
+                        mean1 = math1.weighted_midpoint(
+                            span_saliency1[j], k=c
+                        )  # [13330,1]
+                        mean2 = math1.weighted_midpoint(span_saliency2[j], k=c)
 
                         saliency1_list.append(mean1)
                         saliency2_list.append(mean2)
@@ -383,41 +406,57 @@ class Trainer:
                 saliency1_list = torch.tensor(saliency1_list)
                 saliency2_list = torch.tensor(saliency2_list)
 
-                saliency1_list = torch.unsqueeze(saliency1_list,1) # [13,1]
-                saliency2_list = torch.unsqueeze(saliency2_list,1)
+                saliency1_list = torch.unsqueeze(saliency1_list, 1)  # [13,1]
+                saliency2_list = torch.unsqueeze(saliency2_list, 1)
 
                 saliency1_list = saliency1_list.to(device="cuda")
                 saliency2_list = saliency2_list.to(device="cuda")
-                
-                saliency1_list_euc = math1.logmap0(saliency1_list,k = c)
-                saliency1_list_euc = math1.project(saliency1_list_euc,k =c)
-                
-                saliency2_list_euc = math1.logmap0(saliency2_list,k = c)
-                saliency2_list_euc = math1.project(saliency2_list_euc,k =c)
+
+                saliency1_list_euc = math1.logmap0(saliency1_list, k=c)
+                saliency1_list_euc = math1.project(saliency1_list_euc, k=c)
+
+                saliency2_list_euc = math1.logmap0(saliency2_list, k=c)
+                saliency2_list_euc = math1.project(saliency2_list_euc, k=c)
 
                 saliency1_list_euc = torch.squeeze(saliency1_list_euc)
-                saliency2_list_euc = torch.squeeze(saliency2_list_euc)   
+                saliency2_list_euc = torch.squeeze(saliency2_list_euc)
 
                 # To find the starting idx of the span
-                input1_idx = int(torch.argmin(saliency1_list_euc).data)*stride_len + start_idx1
-                input2_idx = int(torch.argmax(saliency2_list_euc).data)*stride_len + start_idx2
+                input1_idx = (
+                    int(torch.argmin(saliency1_list_euc).data) * stride_len + start_idx1
+                )
+                input2_idx = (
+                    int(torch.argmax(saliency2_list_euc).data) * stride_len + start_idx2
+                )
 
             else:
-                saliency1_pool = (
-                    F.squeeze(F.squeeze(F.average_pooling_1d(saliency1_eg, mix_size, stride=stride_len),axis=0),axis=0)
-                )
-                
-                saliency2_pool = (
-                    F.squeeze(F.squeeze(F.average_pooling_1d(saliency2_eg, mix_size, stride=stride_len),axis=0),axis=0)
+                saliency1_pool = F.squeeze(
+                    F.squeeze(
+                        F.average_pooling_1d(saliency1_eg, mix_size, stride=stride_len),
+                        axis=0,
+                    ),
+                    axis=0,
                 )
 
-                input1_idx = int(F.argmin(saliency1_pool).data)*stride_len + start_idx1
-                input2_idx = int(F.argmax(saliency2_pool).data)*stride_len + start_idx2
+                saliency2_pool = F.squeeze(
+                    F.squeeze(
+                        F.average_pooling_1d(saliency2_eg, mix_size, stride=stride_len),
+                        axis=0,
+                    ),
+                    axis=0,
+                )
+
+                input1_idx = (
+                    int(F.argmin(saliency1_pool).data) * stride_len + start_idx1
+                )
+                input2_idx = (
+                    int(F.argmax(saliency2_pool).data) * stride_len + start_idx2
+                )
 
             left_span = inputs_aug[i, :, :, :input1_idx]
             replace_span = inputs2[i, :, :, input2_idx : input2_idx + mix_size]
             right_span = inputs_aug[i, :, :, input1_idx + mix_size :]
-  
+
             mixed = F.concat([left_span, replace_span, right_span], axis=2)
             inputs_mixed.append(mixed)
 

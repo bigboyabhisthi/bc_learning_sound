@@ -7,7 +7,18 @@ def parse():
 
     # General settings
     parser.add_argument(
-        "--dataset", required=True, choices=["esc10", "esc50", "urbansound8k", "urdu", "savee", "emodb", "emovo", "shemo"]
+        "--dataset",
+        required=True,
+        choices=[
+            "esc10",
+            "esc50",
+            "urbansound8k",
+            "urdu",
+            "savee",
+            "emodb",
+            "emovo",
+            "shemo",
+        ],
     )
     parser.add_argument("--netType", required=True, choices=["envnet", "envnetv2"])
     parser.add_argument("--data", required=True, help="Path to dataset")
@@ -17,15 +28,33 @@ def parse():
         default=-1,
         help="esc: 1-5, urbansound: 1-10 (-1: run on all splits)",
     )
-    parser.add_argument("--seed_val",type=int,default=42,help="Seed value for train-val split")
+    parser.add_argument(
+        "--seedVal", type=int, default=42, help="Seed value for train-val split"
+    )
 
     parser.add_argument("--save", default="None", help="Directory to save the results")
     parser.add_argument("--testOnly", action="store_true")
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--ss_winsize", type=int, default=20)
-    parser.add_argument("--ignorePad", type=int, default=0, help="Ignore padding when computing saliency", choices=[0, 1])
-    parser.add_argument("--stride_length",type=float,default=0.1,help="Fraction of seconds for stride")
-    parser.add_argument("--hyp_mean",type=int,default=0,help="Uses hyperbolic gyro mid point to compute mean saliency")
+    parser.add_argument(
+        "--ignorePad",
+        type=int,
+        default=0,
+        help="Ignore padding when computing saliency",
+        choices=[0, 1],
+    )
+    parser.add_argument(
+        "--stride_length",
+        type=float,
+        default=0.1,
+        help="Fraction of seconds for stride",
+    )
+    parser.add_argument(
+        "--hyp_mean",
+        type=int,
+        default=0,
+        help="Uses hyperbolic gyro mid point to compute mean saliency",
+    )
 
     # Learning settings (default settings are defined below)
     parser.add_argument("--BC", action="store_true", help="BC learning")
@@ -46,8 +75,7 @@ def parse():
 
     # Testing settings
     parser.add_argument("--nCrops", type=int, default=10)
-
-    
+    parser.add_argument("--padVal", type=int, choices=[0, 1], default=1)
 
     opt = parser.parse_args()
 
@@ -61,7 +89,7 @@ def parse():
     elif opt.dataset == "urbansound8k":  # urbansound8k
         opt.nClasses = 10
         opt.nFolds = 10
-    elif opt.dataset == "urdu": # urdu savee emodb emovo
+    elif opt.dataset == "urdu":  # urdu savee emodb emovo
         opt.nClasses = 4
         opt.nFolds = 1
     elif opt.dataset == "emovo":

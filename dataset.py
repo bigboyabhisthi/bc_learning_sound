@@ -7,6 +7,7 @@ import chainer
 import utils as U
 from sklearn.model_selection import train_test_split
 
+
 class SoundDataset(chainer.dataset.DatasetMixin):
     def __init__(self, sounds, labels, opt, train=True):
         self.base = chainer.datasets.TupleDataset(sounds, labels)
@@ -32,7 +33,9 @@ class SoundDataset(chainer.dataset.DatasetMixin):
 
         else:
             funcs = [
-                U.padding(self.opt.inputLength // 2),
+                U.padding(self.opt.inputLength // 2)
+                if self.opt.padVal
+                else U.pad_train(self.opt.inputLength),
                 U.normalize(32768.0),
                 U.multi_crop(self.opt.inputLength, self.opt.nCrops),
             ]
@@ -85,7 +88,7 @@ def setup(opt, split):
     train_labels = []
     val_sounds = []
     val_labels = []
-    
+
     if opt.dataset in ["urdu", "savee", "emodb", "emovo", "shemo"]:
         train_sounds, val_sounds, train_labels, val_labels = train_test_split(
             dataset["sounds"],
@@ -93,9 +96,9 @@ def setup(opt, split):
             test_size=0.2,
             shuffle=True,
             stratify=dataset["labels"],
-            random_state = opt.seed_val
+            random_state=opt.seedVal,
         )
-        
+
         if len(train_sounds) % 2 != 0:
             train_sounds = train_sounds[:-1]
             train_labels = train_labels[:-1]
